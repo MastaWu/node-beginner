@@ -1,13 +1,13 @@
 
 //Route function (passes in handle, pathname, and response)
-function route(handle, pathname, res){
+function route(handle, pathname, res, req){
 
     console.log("You are about to request for " + pathname);
 
     if(typeof handle[pathname] === 'function'){
 
         //Calls function in routeHandler.js
-        handle[pathname](res);
+        handle[pathname](res, req);
 
     }else{
 

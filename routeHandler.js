@@ -1,31 +1,85 @@
-var exec = require("child_process").exec;
+//Dependencies
+var queryString     = require('querystring'),
+    fs              = require('fs'),
+    formidable      = require('formidable');
 
 function start(res){
 
   console.log("Request handler \'start\' was called.");
-  var content = "empty";
+  var body =
+      '<html>' +
+      '<head>' +
+      '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />' +
+      '</head>' +
+      '<body>' +
+      '<form action="/upload" enctype="multipart/form-data" method="post">' +
+      '<input type="file" name="upload">' +
+      '<input type="submit" value="Upload Picture" />' +
+      '</form>' +
+      '</body>' +
+      '</html>';
 
-  exec("ls -lah", function(error, stdout, stderr){
-
-    res.writeHead(200, {"Content-Type": "text/plain"});
-    res.write(stdout);
-    res.end();
-
-  })
-
-return content;
+  res.writeHead(200, {"Content-Type": "text/html"});
+  res.write(body);
+  res.end();
 
 };
 
-function upload(res){
+function upload(res, req){
 
     console.log("Request handler \'upload\' was called.");
-    res.writeHead(200, {"Content-Type": "text/plain"});
-    res.write("Hello Upload");
-    res.end();
+
+    var form = new formidable.IncomingForm();
+    console.log("about to parse");
+
+    form.parse(req, function(error, fields, files){
+
+        console.log("parsing done");
+
+        fs.rename(files.upload.path, "/tmp/test.jpg", function(error){
+
+            if(error){
+
+                fs.unlink("/tmp/test.jpeg");
+                fs.rename(files.upload.path, "/tmp/test.jpg");
+
+            }
+
+        });
+
+        res.writeHead(200, {"Content-Type": "text/html"});
+        res.write("received image: <br />");
+        res.write("<img src='/show' />");
+        res.end();
+
+    });
+
+};
+
+function show(res){
+
+  console.log("Request handler \'show\' was called.");
+  fs.readFile("/tmp/test.jpg", "binary", function(error, file){
+
+     if(error){
+
+         res.writeHead(500, {"Content-Type": "text/plain"})
+         res.write(error + "\n");
+         res.end();
+
+     } else {
+
+         res.writeHead(200, {"Content-Type": "image/jpg"});
+         res.write(file, "binary");
+         res.end();
+
+     }
+
+  });
 
 };
 
 //Export function
 exports.start = start;
 exports.upload = upload;
+exports.show = show;
